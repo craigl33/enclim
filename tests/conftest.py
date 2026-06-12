@@ -60,6 +60,7 @@ def base_config_dict(tmp_path):
             ),
             'stat': 'mean',
             'anon': True,
+            'variable_template': 'timeseries-{variable}-daily-{stat}',
         },
         'manifest': {
             'cache_path': str(tmp_path / 'manifest.json'),

@@ -7,6 +7,7 @@ processing many models.
 """
 
 import logging
+import time
 
 import s3fs
 import xarray as xr
@@ -43,6 +44,8 @@ class CCKPDailyLoader:
         key = self._s3_key(variable, dataset, year)
         url = f"s3://{self._config.bucket}/{key}"
 
+        start = time.perf_counter()
+
         try:
             f = self._fs.open(url, 'rb')
         except FileNotFoundError as exc:
@@ -55,10 +58,13 @@ class CCKPDailyLoader:
         except Exception as exc:
             raise DataLoadError(f"Failed to read {url} as NetCDF: {exc}") from exc
 
-        if variable not in ds.data_vars:
+        data_var = self._config.variable_template.format(variable=variable, stat=self._config.stat)
+        if data_var not in ds.data_vars:
             raise DataLoadError(
-                f"Variable {variable!r} not found in {url}; available: {list(ds.data_vars)}"
+                f"Data variable {data_var!r} (for {variable!r}) not found in {url}; "
+                f"available: {list(ds.data_vars)}"
             )
 
-        logger.debug("Opened %s (variable=%s)", url, variable)
-        return standardise_dims(ds[variable])
+        elapsed = time.perf_counter() - start
+        logger.debug("Opened %s in %.2fs (variable=%s, data_var=%s)", url, elapsed, variable, data_var)
+        return standardise_dims(ds[data_var])

@@ -14,10 +14,18 @@ source:
   stat: mean
   anon: true
 
-  # Optional dask chunking for xr.open_dataset, e.g. {time: 50}. Leave unset
-  # (no chunking) for the small local test; enable for larger ensembles/years
-  # to bound peak memory.
-  # chunks: {time: 50}
+  # Name of the data variable *inside* each NetCDF file - distinct from the
+  # {variable} path segment above. Confirmed 'timeseries-{variable}-daily-{stat}'
+  # for tas, tasmax and hurs.
+  variable_template: "timeseries-{variable}-daily-{stat}"
+
+  # Dask chunking for xr.open_dataset. 'auto' lets dask pick chunk sizes from
+  # each file's native HDF5 chunk layout. With this set, load_variable_year()
+  # stays lazy, so processor.py's metric computation builds a dask graph
+  # instead of forcing a full file read - the whole build() for a
+  # scenario/year becomes one graph, computed when NetCDFWriter.write() calls
+  # to_netcdf().
+  chunks: auto
 
 manifest:
   # Cache of available '{model}-{run}-{scenario}' datasets per variable,
@@ -31,8 +39,10 @@ manifest:
 
 # 'auto': use every dataset the manifest finds (per-metric, see manifest.py).
 # Alternatively, an explicit list of '{model}-{run}-{scenario}' strings to
-# restrict the ensemble to (e.g. for the 5-model local test).
-models: auto
+# restrict the ensemble to - e.g. a quick 2-model smoke test against real S3
+# data before a full AWS run:
+models: [access-cm2-r1i1p1f1-historical, access-esm1-5-r1i1p1f1-historical]
+# models: auto
 
 # One entry per scenario, each with an inclusive year range. The CLI
 # processes every (scenario, year) pair by default; AWS_BATCH_JOB_ARRAY_INDEX

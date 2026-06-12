@@ -17,7 +17,7 @@ from enclim.metrics import required_variables as _metric_required_variables
 from enclim.metrics import validate_metrics
 
 _REQUIRED_SECTIONS = ('source', 'manifest', 'models', 'scenarios', 'metrics', 'output', 'logging')
-_REQUIRED_SOURCE_KEYS = ('bucket', 'collection', 'path_template', 'stat', 'anon')
+_REQUIRED_SOURCE_KEYS = ('bucket', 'collection', 'path_template', 'variable_template', 'stat', 'anon')
 _REQUIRED_MANIFEST_KEYS = ('cache_path', 'refresh', 'variables')
 _REQUIRED_OUTPUT_KEYS = ('dir', 'filename_template')
 _REQUIRED_LOGGING_KEYS = ('level',)
@@ -130,6 +130,10 @@ class EnsembleConfig:
     @property
     def path_template(self) -> str:
         return self._raw['source']['path_template']
+
+    @property
+    def variable_template(self) -> str:
+        return self._raw['source']['variable_template']
 
     @property
     def stat(self) -> str:

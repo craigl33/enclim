@@ -8,6 +8,7 @@ multiply the dominant cost of an AWS run.
 """
 
 import logging
+import time
 
 import xarray as xr
 
@@ -49,12 +50,17 @@ class ModelYearProcessor:
 
         loaded = {}
         for variable in needed_vars:
+            start = time.perf_counter()
             loaded[variable] = self._loader.load_variable_year(variable, dataset, year)
-            logger.debug("Loaded %s for %s/%s", variable, dataset, year)
+            logger.debug("Loaded %s for %s/%s in %.2fs", variable, dataset, year, time.perf_counter() - start)
 
         results = {}
         for metric in metrics:
+            start = time.perf_counter()
             results[variable_name(metric)] = self._compute_metric(metric, loaded)
+            logger.debug(
+                "Computed %s for %s/%s in %.2fs", variable_name(metric), dataset, year, time.perf_counter() - start
+            )
         return results
 
     def _compute_metric(self, metric: dict, loaded: dict) -> xr.DataArray:

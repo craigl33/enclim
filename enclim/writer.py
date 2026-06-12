@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 import xarray as xr
+from dask.diagnostics import ProgressBar
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class NetCDFWriter:
         out_path = out_dir / filename
 
         encoding = {var: {'zlib': True, 'complevel': 4} for var in ds.data_vars}
-        ds.to_netcdf(out_path, encoding=encoding)
+        with ProgressBar():
+            ds.to_netcdf(out_path, encoding=encoding)
         logger.info("Wrote %s", out_path)
         return out_path
