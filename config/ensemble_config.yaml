@@ -1,0 +1,59 @@
+# enclim configuration.
+#
+# Everything that controls a run lives here - no values are hardcoded in
+# the package. See README.md for how to run locally and in Docker.
+
+source:
+  bucket: wbg-cckp
+  collection: cmip6-daily-x0.25
+
+  # {dataset} is the verbatim '{model}-{run}-{scenario}' directory name from
+  # the manifest, e.g. 'access-cm2-r1i1p1f1-historical'. {stat} is a
+  # collection-wide constant - confirmed 'mean' for tas, tasmax and hurs.
+  path_template: "data/{collection}/{variable}/{dataset}/timeseries-{variable}-daily-{stat}_{collection}_{dataset}_timeseries_{stat}_{year}.nc"
+  stat: mean
+  anon: true
+
+  # Optional dask chunking for xr.open_dataset, e.g. {time: 50}. Leave unset
+  # (no chunking) for the small local test; enable for larger ensembles/years
+  # to bound peak memory.
+  # chunks: {time: 50}
+
+manifest:
+  # Cache of available '{model}-{run}-{scenario}' datasets per variable,
+  # built once via S3 ListObjectsV2 and reused on subsequent runs.
+  cache_path: ./manifest_cmip6-daily-x0.25.json
+  refresh: false
+
+  # Must cover every variable required by the metrics below (tasmax for
+  # hd/hi, hurs for hi, tas for cdd / cdd with humidity: true).
+  variables: [tas, tasmax, hurs]
+
+# 'auto': use every dataset the manifest finds (per-metric, see manifest.py).
+# Alternatively, an explicit list of '{model}-{run}-{scenario}' strings to
+# restrict the ensemble to (e.g. for the 5-model local test).
+models: auto
+
+# One entry per scenario, each with an inclusive year range. The CLI
+# processes every (scenario, year) pair by default; AWS_BATCH_JOB_ARRAY_INDEX
+# selects a single pair for one-task-per-scenario-year deployment.
+scenarios:
+  historical:
+    year_start: 2014
+    year_end: 2014
+
+# type: hd  -> day count where tasmax > threshold (deg C)
+# type: hi  -> day count where heat_index(tasmax, hurs) > threshold (deg C)
+# type: cdd -> cumulative degree-days above threshold (deg C), from tas;
+#              add 'humidity: true' to use heat_index(tas, hurs) instead of tas.
+metrics:
+  - {type: hd, threshold: 27.5}
+  - {type: hi, threshold: 35}
+
+output:
+  dir: ./output
+  # {scenario} and {year} are substituted per run.
+  filename_template: "cckp-ensemble-median_{scenario}_{year}.nc"
+
+logging:
+  level: INFO

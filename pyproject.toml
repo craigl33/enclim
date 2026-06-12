@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enclim"
+version = "0.1.0"
+description = "Ensemble-median climate metrics from the World Bank CCKP CMIP6 daily collection"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+enclim = "enclim.run_ensemble:main"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+include = ["enclim*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

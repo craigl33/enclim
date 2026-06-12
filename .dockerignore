@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+.venv/
+venv/
+.git/
+
+tests/
+output/
+manifest_*.json
+
+.DS_Store
+README.md
+pyproject.toml
