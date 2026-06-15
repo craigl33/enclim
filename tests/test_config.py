@@ -110,6 +110,7 @@ def test_valid_config_properties(tmp_path):
     assert config.stat == 'mean'
     assert config.anon is True
     assert config.chunks is None
+    assert config.output_s3_uri is None
     assert config.manifest_refresh is False
     assert config.manifest_variables == ['tas', 'tasmax', 'hurs']
     assert config.models == 'auto'
@@ -137,3 +138,20 @@ def test_chunks_passthrough(tmp_path):
     config = EnsembleConfig(path)
 
     assert config.chunks == {'time': 50}
+
+
+def test_output_s3_uri_passthrough(tmp_path):
+    cfg = base_config_dict(tmp_path)
+    cfg['output']['s3_uri'] = 's3://enclim-outputs/cckp'
+    path = write_config(tmp_path, cfg)
+    config = EnsembleConfig(path)
+
+    assert config.output_s3_uri == 's3://enclim-outputs/cckp'
+
+
+def test_output_s3_uri_must_start_with_s3_scheme(tmp_path):
+    cfg = base_config_dict(tmp_path)
+    cfg['output']['s3_uri'] = '/local/path'
+    path = write_config(tmp_path, cfg)
+    with pytest.raises(ConfigError, match="'output.s3_uri' must be a string starting with 's3://'"):
+        EnsembleConfig(path)

@@ -41,8 +41,8 @@ manifest:
 # Alternatively, an explicit list of '{model}-{run}-{scenario}' strings to
 # restrict the ensemble to - e.g. a quick 2-model smoke test against real S3
 # data before a full AWS run:
-models: [access-cm2-r1i1p1f1-historical, access-esm1-5-r1i1p1f1-historical]
-# models: auto
+# models: [access-cm2-r1i1  p1f1-historical, access-esm1-5-r1i1p1f1-historical]
+models: auto
 
 # One entry per scenario, each with an inclusive year range. The CLI
 # processes every (scenario, year) pair by default; AWS_BATCH_JOB_ARRAY_INDEX
@@ -64,6 +64,11 @@ output:
   dir: ./output
   # {scenario} and {year} are substituted per run.
   filename_template: "cckp-ensemble-median_{scenario}_{year}.nc"
+
+  # Optional: after writing the file locally, also upload it to this S3
+  # prefix (credentials via the default AWS chain - ~/.aws/credentials
+  # locally, or the IAM task role on AWS Batch). Omit to write locally only.
+  # s3_uri: s3://enclim-outputs/cckp
 
 logging:
   level: INFO

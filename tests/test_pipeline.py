@@ -11,10 +11,10 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from conftest import FakeLoader, make_daily_grid
+from conftest import FakeLoader, base_config_dict, make_daily_grid, write_config
 from enclim.config import EnsembleConfig
 from enclim.ensemble import EnsembleBuilder
-from enclim.exceptions import DataLoadError, EnsembleError
+from enclim.exceptions import DataLoadError, EnsembleError, OutputError
 from enclim.processor import ModelYearProcessor
 from enclim.writer import NetCDFWriter
 
@@ -147,3 +147,46 @@ def test_netcdf_writer_round_trip(config_path):
         assert ds.attrs['scenario'] == 'historical'
         assert ds.attrs['year'] == 2014
         assert ds['hd27p5'].attrs['n_models'] == 3
+
+
+def test_netcdf_writer_uploads_to_s3_when_configured(tmp_path, monkeypatch):
+    cfg = base_config_dict(tmp_path)
+    cfg['output']['s3_uri'] = 's3://enclim-outputs/cckp'
+    config = EnsembleConfig(write_config(tmp_path, cfg))
+
+    calls = []
+
+    class FakeS3FileSystem:
+        def put(self, local_path, dest):
+            calls.append((local_path, dest))
+
+    monkeypatch.setattr('enclim.writer.s3fs.S3FileSystem', FakeS3FileSystem)
+
+    grid = make_daily_grid([1.0, 2.0])
+    median = grid.sum(dim='time')
+    median.name = 'hd27p5'
+
+    writer = NetCDFWriter(config)
+    out_path = writer.write({'hd27p5': median}, 'historical', 2014)
+
+    assert calls == [(str(out_path), 's3://enclim-outputs/cckp/cckp-ensemble-median_historical_2014.nc')]
+
+
+def test_netcdf_writer_raises_output_error_on_upload_failure(tmp_path, monkeypatch):
+    cfg = base_config_dict(tmp_path)
+    cfg['output']['s3_uri'] = 's3://enclim-outputs/cckp'
+    config = EnsembleConfig(write_config(tmp_path, cfg))
+
+    class FailingS3FileSystem:
+        def put(self, local_path, dest):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr('enclim.writer.s3fs.S3FileSystem', FailingS3FileSystem)
+
+    grid = make_daily_grid([1.0, 2.0])
+    median = grid.sum(dim='time')
+    median.name = 'hd27p5'
+
+    writer = NetCDFWriter(config)
+    with pytest.raises(OutputError, match="Failed to upload"):
+        writer.write({'hd27p5': median}, 'historical', 2014)

@@ -91,6 +91,8 @@ class EnsembleConfig:
         for key in _REQUIRED_OUTPUT_KEYS:
             if key not in output:
                 errors.append(f"Missing 'output.{key}'")
+        if 's3_uri' in output and not (isinstance(output['s3_uri'], str) and output['s3_uri'].startswith('s3://')):
+            errors.append("'output.s3_uri' must be a string starting with 's3://'")
 
         logging_cfg = raw['logging']
         for key in _REQUIRED_LOGGING_KEYS:
@@ -200,6 +202,12 @@ class EnsembleConfig:
     @property
     def output_filename_template(self) -> str:
         return self._raw['output']['filename_template']
+
+    @property
+    def output_s3_uri(self):
+        """Optional 's3://bucket/prefix' to upload the written NetCDF file to,
+        in addition to writing it locally. Returns None if not configured."""
+        return self._raw['output'].get('s3_uri')
 
     # -- logging ------------------------------------------------------
     @property

@@ -20,3 +20,7 @@ class DataLoadError(Exception):
 
 class EnsembleError(Exception):
     """Raised when an ensemble cannot be computed (e.g. no models available for a metric)."""
+
+
+class OutputError(Exception):
+    """Raised when the computed ensemble cannot be written to disk or uploaded to S3."""

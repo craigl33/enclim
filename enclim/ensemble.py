@@ -49,8 +49,7 @@ class EnsembleBuilder:
         grids = {name: [] for name in metric_datasets}
         used_models = {name: [] for name in metric_datasets}
 
-        for i, dataset in enumerate(all_datasets):
-            logger.info("Processing %s (%d/%d) for %s/%d", dataset, i + 1, len(all_datasets), scenario, year)
+        for dataset in all_datasets:
             applicable = [m for m in metrics if dataset in metric_datasets[variable_name(m)]]
             try:
                 results = self._processor.process(dataset, year, applicable)
